@@ -1,0 +1,241 @@
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #2d3436;
+    --block-empty: #e0e0e0;
+    --block-marked: #a8d5e2;
+    /* Soothing pastel blue */
+    --block-hover: #d1d1d1;
+    --accent-color: #74b9ff;
+    --font-main: 'Outfit', sans-serif;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h1 {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.subtitle {
+    font-weight: 300;
+    color: #636e72;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1000px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid #b2bec3;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #dfe6e9;
+    border-color: #636e72;
+}
+
+.view-toggle {
+    display: flex;
+    background: #dfe6e9;
+    padding: 4px;
+    border-radius: 8px;
+    gap: 4px;
+}
+
+.view-toggle input[type="radio"] {
+    display: none;
+}
+
+.toggle-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: #636e72;
+}
+
+.view-toggle input[type="radio"]:checked+.toggle-btn {
+    background: #fff;
+    color: #2d3436;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+
+
+/* Grid Layout */
+.grid-container {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    /* Labels column + Weeks column */
+    gap: 30px 10px;
+    /* Increased vertical gap for labels */
+    width: 100%;
+    max-width: 1100px;
+    overflow-x: auto;
+    padding-bottom: 50px;
+    padding-top: 30px;
+    /* Space for top labels on first row */
+    /* Extra space at bottom for last row labels */
+    overflow-y: visible;
+    /* Ensure labels aren't clipped */
+}
+
+.year-label {
+    font-size: 0.75rem;
+    color: #636e72;
+    text-align: right;
+    padding-right: 10px;
+    line-height: 12px;
+    /* Match block height approx */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.weeks-row {
+    display: flex;
+    gap: 3px;
+    flex-wrap: nowrap;
+    position: relative;
+    /* Establish stacking context if needed */
+}
+
+.block {
+    width: 10px;
+    height: 10px;
+    background-color: var(--block-empty);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s;
+    border: 1px solid transparent;
+    /* Reserve space for border */
+    position: relative;
+    /* For absolute positioning of labels */
+}
+
+.block:hover {
+    transform: scale(1.2);
+    z-index: 200;
+    /* Highest on hover */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+/* .marked class is now only for the specific block that starts an event */
+.block.event-start {
+    border-color: #2d3436;
+    transform: scale(1.1);
+    z-index: 100;
+    /* Ensure start blocks and labels are above other rows */
+}
+
+/* Event Labels */
+.event-label {
+    position: absolute;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    color: #636e72;
+    pointer-events: none;
+    /* Let clicks pass through to the block */
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 600;
+}
+
+.event-label.top {
+    bottom: 14px;
+    /* block height + gap */
+}
+
+.event-label.bottom {
+    top: 14px;
+    /* block height + gap */
+}
+
+/* Connecting tick mark */
+.event-label::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 4px;
+    background-color: #636e72;
+}
+
+.event-label.top::after {
+    bottom: -4px;
+}
+
+.event-label.bottom::after {
+    top: -4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .block {
+        width: 8px;
+        height: 8px;
+    }
+
+    .weeks-row {
+        gap: 2px;
+    }
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background-color: #2d3436;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 200px;
+    word-wrap: break-word;
+    transform: translate(-50%, -100%);
+    /* Center above cursor */
+    margin-top: -10px;
+}
+
+.tooltip.hidden {
+    display: none;
+}
