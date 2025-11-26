@@ -1,5 +1,8 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     const gridContainer = document.getElementById('life-grid');
+    if (!gridContainer) console.error('Grid container not found!');
+
     const resetBtn = document.getElementById('reset-btn');
     const TOTAL_YEARS = 95;
     const WEEKS_PER_YEAR = 52;
@@ -8,15 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const tooltip = document.getElementById('tooltip');
     const birthYearInput = document.getElementById('birth-year');
 
-    // Soothing pastel palette
+    // Vibrant Pastel Palette (Bright but readable)
     const PALETTE = [
-        '#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff',
-        '#a0c4ff', '#bdb2ff', '#ffc6ff', '#fffffc', '#e4c1f9',
-        '#fbf8cc', '#fde4cf', '#ffcfd2', '#f1c0e8', '#cfbaf0',
-        '#a3c4f3', '#90dbf4', '#8eecf5', '#98f5e1', '#b9fbc0'
+        '#ff6b6b', // Pastel Red
+        '#feca57', // Pastel Orange
+        '#48dbfb', // Pastel Blue
+        '#ff9ff3', // Pastel Pink
+        '#54a0ff', // Electric Blue
+        '#1dd1a1', // Wild Caribbean Green
+        '#f368e0', // Amour (Magenta)
+        '#00d2d3', // Jade Dust (Teal)
+        '#9c88ff', // Pastel Purple
+        '#ff9f43', // Double Dragon Skin (Orange)
+        '#8395a7', // Muted Blue Grey
+        '#22a6b3', // Mandy (Darker Teal)
+        '#ee5253', // Armor Red
+        '#0abde3', // Cyan
+        '#10ac84'  // Mountain Meadow
     ];
 
     // Load saved data
+    let lastGeneratedColor = null;
     let markedBlocks = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     let birthYear = parseInt(localStorage.getItem(BIRTH_YEAR_KEY)) || new Date().getFullYear();
 
@@ -68,8 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     saveState(); // Save migrated data immediately
 
+
+
     function getRandomColor() {
-        return PALETTE[Math.floor(Math.random() * PALETTE.length)];
+        let color;
+        let attempts = 0;
+        do {
+            color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+            attempts++;
+        } while (color === lastGeneratedColor && attempts < 5);
+
+        lastGeneratedColor = color;
+        return color;
     }
 
     function saveState() {
@@ -151,6 +176,102 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Drag and Drop Handlers (Delegated) ---
+
+    gridContainer.addEventListener('dragstart', (e) => {
+        const target = e.target;
+        // Allow dragging if it's a block with event-start OR an event-label
+        if (target.classList.contains('event-start') || target.classList.contains('event-label')) {
+            const block = target.closest('.block');
+            if (block) {
+                const id = block.dataset.sourceId || block.dataset.blockId;
+                e.dataTransfer.setData('text/plain', id);
+                e.dataTransfer.effectAllowed = 'move';
+                block.style.opacity = '0.5';
+                block.classList.add('dragging');
+            }
+        } else {
+            e.preventDefault(); // Prevent dragging other things
+        }
+    });
+
+    gridContainer.addEventListener('dragend', (e) => {
+        const block = e.target.closest('.block');
+        if (block) {
+            block.style.opacity = '1';
+            block.classList.remove('dragging');
+        }
+        document.querySelectorAll('.block.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+
+    gridContainer.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Necessary to allow dropping
+        const block = e.target.closest('.block');
+        if (block && !block.classList.contains('dragging')) {
+            e.dataTransfer.dropEffect = 'move';
+            block.classList.add('drag-over');
+            // Remove drag-over from others to prevent sticky highlights
+            document.querySelectorAll('.block.drag-over').forEach(el => {
+                if (el !== block) el.classList.remove('drag-over');
+            });
+        }
+    });
+
+    gridContainer.addEventListener('dragleave', (e) => {
+        const block = e.target.closest('.block');
+        if (block) {
+            block.classList.remove('drag-over');
+        }
+    });
+
+    gridContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetBlock = e.target.closest('.block');
+
+        // Cleanup highlights
+        document.querySelectorAll('.block.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+        if (!targetBlock) return;
+
+        const sourceId = e.dataTransfer.getData('text/plain');
+        const targetId = targetBlock.dataset.blockId;
+
+        if (!sourceId || !targetId || sourceId === targetId) return;
+
+        // Move data
+        if (markedBlocks[sourceId]) {
+            // Check if target already has an event (conflict resolution: overwrite)
+            if (markedBlocks[targetId]) {
+                if (!confirm(`Overwrite existing event "${markedBlocks[targetId].text}"?`)) {
+                    return;
+                }
+            }
+
+            markedBlocks[targetId] = markedBlocks[sourceId];
+            delete markedBlocks[sourceId];
+            saveState();
+            renderGrid();
+        }
+    });
+
+    // Delegated Click Handler
+    gridContainer.addEventListener('click', (e) => {
+        const block = e.target.closest('.block');
+        if (!block) return;
+
+        // If clicking a label, we still want to trigger the block toggle
+        // But if we just finished a drag, we shouldn't trigger click.
+        // Browser usually handles this, but let's be safe.
+
+        // Parse ID
+        const parts = block.dataset.blockId.split('-');
+        if (parts.length === 2) {
+            const year = parseInt(parts[0]);
+            const week = parseInt(parts[1]);
+            toggleBlock(year, week, block);
+        }
+    });
+
     function renderGrid() {
         gridContainer.innerHTML = '';
 
@@ -183,16 +304,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const block = document.createElement('div');
                 block.className = 'block';
                 const blockId = `${year}-${week}`;
+                block.dataset.blockId = blockId;
 
                 // Check if a new event starts here
                 if (markedBlocks[blockId]) {
                     currentEra = markedBlocks[blockId];
                     block.classList.add('event-start');
 
+                    // Make draggable
+                    block.setAttribute('draggable', 'true');
+
                     // Create persistent label
                     const eventLabel = document.createElement('div');
                     eventLabel.className = 'event-label';
                     eventLabel.textContent = currentEra.text;
+
+                    // Make label draggable too
+                    eventLabel.setAttribute('draggable', 'true');
 
                     // Alternate position
                     if (eventCounter % 2 === 0) {
@@ -212,12 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     block.style.backgroundColor = ''; // Reset to default (CSS handles empty color)
                 }
-
-                block.addEventListener('click', (e) => {
-                    // Prevent label click from triggering (though pointer-events: none handles this usually)
-                    if (e.target !== block && !block.contains(e.target)) return;
-                    toggleBlock(year, week, block);
-                });
 
                 // Tooltip logic: show detailed info
                 block.addEventListener('mouseenter', (e) => {
@@ -279,6 +401,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const startW = Math.floor(m * (WEEKS_PER_YEAR / 12));
                     const endW = Math.floor((m + 1) * (WEEKS_PER_YEAR / 12));
 
+                    // Set target ID for dropping (first week of the month)
+                    block.dataset.blockId = `${currentYear}-${startW}`;
+
                     // Check for events in this month
                     let eventInMonth = null;
                     for (let w = startW; w < endW && w < WEEKS_PER_YEAR; w++) {
@@ -293,10 +418,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (eventInMonth) {
                         block.classList.add('event-start');
 
+                        // Make draggable
+                        block.setAttribute('draggable', 'true');
+                        // Use the specific event ID as source
+                        block.dataset.sourceId = Object.keys(markedBlocks).find(key => markedBlocks[key] === eventInMonth);
+
+
                         // Create persistent label
                         const eventLabel = document.createElement('div');
                         eventLabel.className = 'event-label';
                         eventLabel.textContent = eventInMonth.text;
+
+                        // Make label draggable
+                        eventLabel.setAttribute('draggable', 'true');
 
                         // Alternate position
                         if (eventCounter % 2 === 0) {
@@ -313,11 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         block.style.backgroundColor = currentEra.color;
                         block.setAttribute('data-has-tooltip', 'true');
                     }
-
-                    // Click interaction: Toggle the first week of this month
-                    block.addEventListener('click', () => {
-                        toggleBlock(currentYear, startW, block);
-                    });
 
                     // Tooltip
                     block.addEventListener('mouseenter', (e) => {
