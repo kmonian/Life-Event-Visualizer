@@ -152,10 +152,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const viewWeeksBtn = document.getElementById('view-weeks');
     const viewMonthsBtn = document.getElementById('view-months');
+    const viewYearsBtn = document.getElementById('view-years');
     const headerTitle = document.querySelector('header h1');
     const headerDesc = document.querySelector('header p');
 
-    let currentView = 'weeks'; // 'weeks' or 'months'
+    let currentView = 'weeks'; // 'weeks', 'months', or 'years'
 
     // View Toggle Listeners
     viewWeeksBtn.addEventListener('change', () => {
@@ -172,6 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
             currentView = 'months';
             headerTitle.textContent = "Life in Months";
             headerDesc.textContent = "Each block represents one month of your life. Mark your significant events.";
+            renderGrid();
+        }
+    });
+
+    viewYearsBtn.addEventListener('change', () => {
+        if (viewYearsBtn.checked) {
+            currentView = 'years';
+            headerTitle.textContent = "Life in Years";
+            headerDesc.textContent = "Each block represents one year of your life. Mark your significant events.";
             renderGrid();
         }
     });
@@ -277,8 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentView === 'weeks') {
             renderWeeksView();
-        } else {
+        } else if (currentView === 'months') {
             renderMonthsView();
+        } else {
+            renderYearsView();
         }
     }
 
@@ -460,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (eventName) {
                             tooltipContent = `<strong>${eventName}</strong><br>` + tooltipContent;
                         }
+
                         showTooltip(e, tooltipContent);
                     });
 
@@ -467,6 +480,109 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     row.appendChild(block);
                 }
+            }
+            gridContainer.appendChild(row);
+        }
+    }
+
+    function renderYearsView() {
+        const YEARS_PER_ROW = 10;
+        const totalRows = Math.ceil(TOTAL_YEARS / YEARS_PER_ROW);
+
+        let currentEra = null; // Persists across rows/years
+        let eventCounter = 0; // To alternate label position
+
+        for (let rowIdx = 0; rowIdx < totalRows; rowIdx++) {
+            const startYear = rowIdx * YEARS_PER_ROW;
+            const endYear = Math.min(startYear + YEARS_PER_ROW - 1, TOTAL_YEARS - 1);
+
+            // Label
+            const label = document.createElement('div');
+            label.className = 'year-label';
+            label.textContent = `${startYear}-${endYear}`;
+            gridContainer.appendChild(label);
+
+            // Row Container
+            const row = document.createElement('div');
+            row.className = 'weeks-row';
+
+            for (let y = 0; y < YEARS_PER_ROW; y++) {
+                const currentYear = startYear + y;
+                if (currentYear >= TOTAL_YEARS) break;
+
+                const block = document.createElement('div');
+                block.className = 'block';
+                // Target ID for dropping (first week of the year)
+                block.dataset.blockId = `${currentYear}-0`;
+
+                // Find all events in this year
+                let eventsInYear = [];
+                for (let w = 0; w < WEEKS_PER_YEAR; w++) {
+                    const id = `${currentYear}-${w}`;
+                    if (markedBlocks[id]) {
+                        eventsInYear.push(markedBlocks[id]);
+                        currentEra = markedBlocks[id]; // Update era
+                    }
+                }
+
+                if (eventsInYear.length > 0) {
+                    const primaryEvent = eventsInYear[0];
+                    block.classList.add('event-start');
+
+                    // Disable dragging for now as per plan
+                    block.setAttribute('draggable', 'false');
+
+                    // Create persistent label
+                    const eventLabel = document.createElement('div');
+                    eventLabel.className = 'event-label';
+
+                    let labelText = primaryEvent.text;
+                    if (eventsInYear.length > 1) {
+                        labelText += ' +';
+                    }
+                    eventLabel.textContent = labelText;
+
+                    // Alternate position
+                    if (eventCounter % 2 === 0) {
+                        eventLabel.classList.add('top');
+                    } else {
+                        eventLabel.classList.add('bottom');
+                    }
+                    block.appendChild(eventLabel);
+
+                    eventCounter++;
+
+                    // Use color of the first event
+                    block.style.backgroundColor = primaryEvent.color;
+                    block.setAttribute('data-has-tooltip', 'true');
+                } else if (currentEra) {
+                    block.style.backgroundColor = currentEra.color;
+                    block.setAttribute('data-has-tooltip', 'true');
+                }
+
+                // Tooltip
+                block.addEventListener('mouseenter', (e) => {
+                    const age = currentYear;
+                    const calendarYear = birthYear + currentYear;
+
+                    let tooltipContent = `<strong>Age: ${age}</strong> | Year: ${calendarYear}`;
+
+                    if (eventsInYear.length > 0) {
+                        tooltipContent = `<strong>Events:</strong><br>`;
+                        eventsInYear.forEach(evt => {
+                            tooltipContent += `• ${evt.text}<br>`;
+                        });
+                        tooltipContent += `<br>Age: ${age} | Year: ${calendarYear}`;
+                    } else if (currentEra) {
+                        tooltipContent = `<strong>${currentEra.text}</strong><br>` + tooltipContent;
+                    }
+
+                    showTooltip(e, tooltipContent);
+                });
+
+                block.addEventListener('mouseleave', hideTooltip);
+
+                row.appendChild(block);
             }
             gridContainer.appendChild(row);
         }
