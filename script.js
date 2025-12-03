@@ -285,16 +285,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderGrid() {
         gridContainer.innerHTML = '';
 
+        // Calculate current time context
+        const now = new Date();
+        const currentCalendarYear = now.getFullYear();
+        const currentAgeYear = currentCalendarYear - birthYear;
+
+        // Calculate current week index (0-51)
+        const startOfYear = new Date(currentCalendarYear, 0, 1);
+        const days = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
+        const currentWeekIndex = Math.floor(days / 7);
+
+        const currentMonthIndex = now.getMonth();
+
         if (currentView === 'weeks') {
-            renderWeeksView();
+            renderWeeksView(currentAgeYear, currentWeekIndex);
         } else if (currentView === 'months') {
-            renderMonthsView();
+            renderMonthsView(currentAgeYear, currentMonthIndex);
         } else {
-            renderYearsView();
+            renderYearsView(currentAgeYear);
         }
     }
 
-    function renderWeeksView() {
+    function renderWeeksView(currentAgeYear, currentWeekIndex) {
         // State for "fill forward" logic
         let currentEra = null; // { text: "...", color: "..." }
         let eventCounter = 0; // To alternate label position
@@ -317,6 +329,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 block.className = 'block';
                 const blockId = `${year}-${week}`;
                 block.dataset.blockId = blockId;
+
+                // Check for passed time
+                if (year < currentAgeYear || (year === currentAgeYear && week < currentWeekIndex)) {
+                    block.classList.add('past');
+                }
 
                 // Check if a new event starts here
                 if (markedBlocks[blockId]) {
@@ -350,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     block.style.backgroundColor = currentEra.color;
                     block.setAttribute('data-has-tooltip', 'true');
                 } else {
-                    block.style.backgroundColor = ''; // Reset to default (CSS handles empty color)
+                    // Only apply empty color if not past, or let CSS handle it
                 }
 
                 // Tooltip logic: show detailed info
@@ -380,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Revised renderMonthsView with correct state tracking
-    function renderMonthsView() {
+    function renderMonthsView(currentAgeYear, currentMonthIndex) {
         const YEARS_PER_ROW = 5;
         const totalRows = Math.ceil(TOTAL_YEARS / YEARS_PER_ROW);
 
@@ -415,6 +432,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Set target ID for dropping (first week of the month)
                     block.dataset.blockId = `${currentYear}-${startW}`;
+
+                    // Check for passed time
+                    if (currentYear < currentAgeYear || (currentYear === currentAgeYear && m < currentMonthIndex)) {
+                        block.classList.add('past');
+                    }
 
                     // Check for events in this month
                     let eventInMonth = null;
@@ -485,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderYearsView() {
+    function renderYearsView(currentAgeYear) {
         const YEARS_PER_ROW = 10;
         const totalRows = Math.ceil(TOTAL_YEARS / YEARS_PER_ROW);
 
@@ -514,6 +536,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 block.className = 'block';
                 // Target ID for dropping (first week of the year)
                 block.dataset.blockId = `${currentYear}-0`;
+
+                // Check for passed time
+                if (currentYear < currentAgeYear) {
+                    block.classList.add('past');
+                }
 
                 // Find all events in this year
                 let eventsInYear = [];
