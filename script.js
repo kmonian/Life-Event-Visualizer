@@ -4,12 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!gridContainer) console.error('Grid container not found!');
 
     const resetBtn = document.getElementById('reset-btn');
-    const TOTAL_YEARS = 95;
+    let TOTAL_YEARS = 90; // Default, mutable
     const WEEKS_PER_YEAR = 52;
     const STORAGE_KEY = 'life_event_visualizer_data';
     const BIRTH_YEAR_KEY = 'life_event_visualizer_birth_year';
+    const TOTAL_YEARS_KEY = 'life_event_visualizer_total_years';
     const tooltip = document.getElementById('tooltip');
     const birthYearInput = document.getElementById('birth-year');
+    const totalYearsInput = document.getElementById('total-years');
 
     // Vibrant Pastel Palette (Bright but readable)
     const PALETTE = [
@@ -34,13 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastGeneratedColor = null;
     let markedBlocks = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     let birthYear = parseInt(localStorage.getItem(BIRTH_YEAR_KEY)) || new Date().getFullYear();
+    TOTAL_YEARS = parseInt(localStorage.getItem(TOTAL_YEARS_KEY)) || 90;
 
-    // Initialize input
+    // Initialize inputs
     birthYearInput.value = birthYear;
+    totalYearsInput.value = TOTAL_YEARS;
 
     birthYearInput.addEventListener('change', (e) => {
         birthYear = parseInt(e.target.value);
         localStorage.setItem(BIRTH_YEAR_KEY, birthYear);
+        renderGrid();
+    });
+
+    totalYearsInput.addEventListener('change', (e) => {
+        let val = parseInt(e.target.value);
+        if (val < 10) val = 10; // Minimum
+        if (val > 150) val = 150; // Maximum
+        TOTAL_YEARS = val;
+        localStorage.setItem(TOTAL_YEARS_KEY, TOTAL_YEARS);
         renderGrid();
     });
 
