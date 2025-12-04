@@ -30,7 +30,7 @@ body {
 
 header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 h1 {
@@ -46,11 +46,25 @@ h1 {
 
 .controls {
     display: flex;
-    justify-content: space-between;
-    width: 100%;
+    justify-content: center;
+    width: fit-content;
     max-width: 1000px;
-    margin-bottom: 20px;
+    margin: 0 auto 10px auto;
     align-items: center;
+    border: 1px solid #b2bec3;
+    border-radius: 8px;
+    padding: 8px 15px;
+    background-color: #ffffff;
+    flex-wrap: wrap;
+    /* Allow wrapping on small screens */
+    gap: 20px;
+}
+
+.controls-left,
+.controls-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
 .btn-secondary {
@@ -95,8 +109,6 @@ h1 {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     font-weight: 600;
 }
-
-
 
 /* Grid Layout */
 .grid-container {
