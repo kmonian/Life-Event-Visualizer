@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentView = 'weeks';
             headerTitle.textContent = "Life in Weeks";
             headerDesc.textContent = "Each block represents one week of your life. Mark your significant events.";
+            gridContainer.classList.remove('years-view');
             renderGrid();
         }
     });
@@ -190,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentView = 'months';
             headerTitle.textContent = "Life in Months";
             headerDesc.textContent = "Each block represents one month of your life. Mark your significant events.";
+            gridContainer.classList.remove('years-view');
             renderGrid();
         }
     });
@@ -198,7 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewYearsBtn.checked) {
             currentView = 'years';
             headerTitle.textContent = "Life in Years";
-            headerDesc.textContent = "Each block represents one year of your life. Mark your significant events.";
+            headerDesc.textContent = "Each block represents one year of your life. Hover to see events.";
+            gridContainer.classList.add('years-view');
             renderGrid();
         }
     });
