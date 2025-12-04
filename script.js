@@ -65,8 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '22-20': "Graduated College"
     };
 
-    // Apply defaults if no data exists
-    if (!markedBlocks || Object.keys(markedBlocks).length === 0) {
+    function initializeDefaults() {
         markedBlocks = {};
         for (const [key, text] of Object.entries(DEFAULT_EVENTS)) {
             markedBlocks[key] = {
@@ -75,6 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
         saveState();
+    }
+
+    // Apply defaults if no data exists
+    if (!markedBlocks || Object.keys(markedBlocks).length === 0) {
+        initializeDefaults();
     }
 
     // Migration from old Set format if necessary (even older format)
@@ -629,9 +633,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     resetBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to clear all marked events?')) {
-            markedBlocks = {};
-            saveState();
+        if (confirm('Are you sure you want to reset to default events? This will clear your current changes.')) {
+            initializeDefaults();
             renderGrid();
         }
     });
